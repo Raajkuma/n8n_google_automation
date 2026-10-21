@@ -1,0 +1,193 @@
+{
+  "name": "Mail Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $json.To }}",
+        "subject": "={{ $json.Subject }}",
+        "emailType": "text",
+        "message": "={{ $json.Message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        16
+      ],
+      "id": "0041f7ec-d5d9-41be-908c-8e5dd8ff5719",
+      "name": "Send a message",
+      "webhookId": "79873d8e-5a14-483b-9416-6e28502d1277",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GLORIr8pSpxk7NYe",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nYou are an expert professional email writer.\n\nYour task is to convert the user's request into a clear, concise, polite, and professional email.\n\nUSER INPUT:\nFrom: Tony Stark\nStudent Name: {{ $json[\"Name \"] }} , \nCourse Name: {{ $json.Course }},\nScore: {{ $json.Score }},\nStatus of the Assesment: {{ $json.Status }}\n\nRULES:\n\n1. EMAIL CONTENT\n- Understand the user's intent and write an appropriate email.\n- Always maintain a polite, respectful, and professional tone.\n- Use clear, grammatically correct English.\n- Keep the email body to a MAXIMUM of 100 words, including greetings and closing.\n- Generate a short, relevant, professional email subject.\n- Preserve all important details provided by the user.\n- Do not invent names, dates, promises, or other information.\n- Use an appropriate greeting and closing within the 50-word limit.\n- Do not add explanations, commentary, or unnecessary text.\n\n2. RECIPIENT EMAIL VALIDATION\n- Extract the recipient's email address from the user's message.\n- If the recipient email is missing, ask the user to provide it.\n- Do NOT generate a final email until a valid recipient email address is available.\n- If the email address is invalid, request a valid email address.\n- Never invent or assume a recipient email address.\n- If a recipient address was provided earlier in the conversation, reuse it unless the user specifies a different address.\n- If multiple recipient addresses are provided without a clear intended recipient, ask for clarification.\n\n3. MISSING INFORMATION\n- Only ask questions when required to complete the email.\n- Do not ask for optional information such as sender name or job title.\n- If sufficient information is available, generate the email directly.\n- If the user's purpose is unclear, ask a concise clarification question.\n\n4. OUTPUT FORMAT\n- Return ONLY a valid JSON object.\n- Do not wrap JSON in Markdown or code fences.\n- Do not include text before or after the JSON.\n- Use exactly these keys: \"Subject\", \"To\", \"Message\".\n- All values must be strings.\n- Escape special characters correctly to preserve valid JSON.\n\n5. SUCCESS RESPONSE\nWhen the recipient email is valid and the intent is clear, return:\n\n{\n  \"Subject\": \"Relevant professional email subject\",\n  \"To\":{{ $json.EmailID }} ,\n  \"Message\": \"Dear Recipient,\\n\\nWrite a polite and professional email in no more than 50 words.\\n\\nBest regards,\\nTony Stark\"\n}\n\n6. MISSING OR INVALID RECIPIENT\nWhen a valid recipient email is unavailable, return:\n\n{\n  \"Subject\": \"\",\n  \"To\": \"\",\n  \"Message\": \"Please provide the recipient's valid email address.\"\n}\n\n7. UNCLEAR REQUEST\nIf the recipient email is available but the email purpose is unclear, return:\n\n{\n  \"Subject\": \"\",\n  \"To\":{{ $json.EmailID }},\n  \"Message\": \"Could you please tell me what you would like the email to say?\"\n}\n\n8. FINAL VALIDATION\nBefore responding, verify:\n- The output is valid JSON.\n- Exactly three keys are present.\n- The recipient email address is valid when generating an email.\n- The subject is relevant and concise.\n- The email body does not exceed 50 words.\n- The tone is polite and professional.\n- All essential user-provided details are preserved.\n- No information has been fabricated.\n- No text appears outside the JSON object.\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        16
+      ],
+      "id": "c35f69d1-7c86-41d8-aa51-956a4f075855",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "docker.io/ai/qwen3-vl:2B-BF16",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        224,
+        224
+      ],
+      "id": "2ba3fff7-e67a-4730-aa27-0afa21a64e5b",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "nOWUVdTKuenO2QS3",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nreturn $input.all().map(item => {\n  // Convert the text containing JSON into an object\n  const email = JSON.parse(item.json.text);\n\n  // Return each email as a separate n8n item\n  return {\n    json: {\n      Subject: email.Subject,\n      To: email.To,\n      Message: email.Message\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        16
+      ],
+      "id": "9586c9c0-27d6-424d-8412-2e021bbf572b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1TzXrZU1FhRn_utNSJtzJPQ3sqOTEapeGZIsjTal-kE0/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TzXrZU1FhRn_utNSJtzJPQ3sqOTEapeGZIsjTal-kE0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        16
+      ],
+      "id": "bd2d9841-ce20-4d49-b78c-1814c3225479",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0Dm1Clp5Af7LoFgV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        16
+      ],
+      "id": "ac9c066c-334b-45fd-834e-55627145fd08",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ccb87eb1-1263-4171-9089-8e1512b24675",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6bf3883745d5651b7d2065e997eedea7ff7e87b443d4aa6495bc92c38c0d60cd"
+  },
+  "nodeGroups": [],
+  "id": "MGuA0tIqnWfvnV5s",
+  "tags": []
+}
